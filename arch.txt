@@ -1,0 +1,43 @@
+python with less libraries as possible
+login with github
+store on github
+streaming json
+every entry hashed with pubkey
+
+problems
+- what to do with like count
+- and retweet count
+but can do approximation doing:
+- have statistical servers randoming pulling feeds from the network
+- each client randomly connects to a statistical server, pulls numbers
+
+problem
+- handle replication
+
+component:
+hashtag listeners
+user listeners
+web storage
+
+architecture
+---
+push support: new items are pushed to the interested party, along with a profile.json url
+pull support: clients pull regularly all baseurls from following.json list
+
+feed.json
+--
+id = random 32 byte
+
+{version:1, id: X, type: tweet, tweet: "abc", datetime: "xyz", location: (lng, lat), hash: afijew}
+{version:1, id: X, type: retweet, tweetid: "username:id", datetime: "xyz", location: (lng, lat), hash: afijew}
+{version:1, id: X, type: like, tweetid: "username:id", datetime: "xyz", location: (lng, lat), hash: afijew}
+{version:1, id: X, type: reply, tweet: "blabla", replyto: "username:id or username", datetime: "xyz", location: (lng, lat), hash: afijew}
+{version:1, id: X, type: pointer, url: "next-feed.json", hash: afijew}
+
+profile.json
+---
+{version:1, pubKey: "abc123", handle: "@abc", "Name": "abc def", "imageUrl": http..., "homepage": http:... hash: "abcoiwej", pushUrl:"http..."}
+
+following.json
+---
+{version: 1, handle: "@akak - can be different than remote handle", baseUrl: "http://../jsonetc", hash: "iojoij"} 

@@ -6,17 +6,19 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-try:
-    import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-except ImportError:
-    flags = None
+from newton import config
+from newton.storage.errors import StorageException
+from newton.async_http import fetch
+from contextlib import contextmanager
+import tempfile
+import logging
 
 # If modifying these scopes, delete your previously saved credentials
 SCOPES = 'https://www.googleapis.com/auth/drive.file'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Newton'
 
+logger = logging.getLogger()
 
 def get_credentials():
     """Gets valid user credentials from storage.
@@ -72,3 +74,45 @@ def upload_file(file_path, file_name, file_id):
     file = drive_service.files().get(fileId=file['id']).execute()
     download_url = file.get('webContentLink')
     return file['id'], download_url
+
+def init():
+    with tempfile.NamedTemporaryFile() as f:
+        # google drive does not accept empty files
+        f.write(b"{}")
+        f.flush()
+
+        profile = upload_file(f.name, "profile.json", None)
+        feed = upload_file(f.name, "feed.json", None)
+        following = upload_file(f.name, "following.json", None)
+        conf = {
+                'profile.json': {'id': profile[0], 'url': profile[1]},
+                'feed.json': {'id': feed[0], 'url': feed[1]},
+                'following.json': {'id': following[0], 'url': following[1]}
+                }
+
+        print(conf)
+
+    print("Please write this data in the config file")
+    return conf
+
+async def read_resource(name):
+    url = config.GOOGLEDRIVE_JSONFILES[name]['url']
+    logger.info("Reading resource from Google drive - name %s, url %s", name, url)
+    data = await fetch(url)
+    if data == b"{}":
+        return ""
+    return data.decode("utf8")
+
+@contextmanager
+def write_resource(name, **kwargs):
+    t = tempfile.NamedTemporaryFile(delete=False)
+    yield t
+    t.close()
+
+    if 'google_fileid' in kwargs:
+        idfile = kwargs['google_fileid']
+    else:
+        idfile = config.GOOGLEDRIVE_JSONFILES[name]['id']
+
+    logger.info("Writing resource from Google drive - name %s, idfile %s", name, idfile)
+    upload_file(t.name, name, idfile)

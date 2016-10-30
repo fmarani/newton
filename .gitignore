@@ -1,1 +1,4 @@
 __pycache__/
+output/
+backup/
+client_secret.json

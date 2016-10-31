@@ -99,6 +99,12 @@ async def follow(user_url):
                 f.write(json.dumps(data) + "\n")
 
 async def get_timelines():
+    async def add_handle(fetcher, handle):
+        data = await fetcher
+        for datum in data:
+            datum['handle'] = handle
+        return data
+
     tasks = []
     responses = []
 
@@ -111,12 +117,13 @@ async def get_timelines():
     async with async_http.session() as session:
         for line in followers:
             user_data = json.loads(line)
+            handle = user_data['handle']
             url_feed = user_data['feedUrl']
 
-            task = asyncio.ensure_future(async_http.fetch_multijson(url_feed, session))
+            task = asyncio.ensure_future(add_handle(async_http.fetch_multijson(url_feed, session), handle))
             tasks.append(task)
 
-            responses = await asyncio.gather(*tasks)
+        responses = await asyncio.gather(*tasks)
 
     return heapq.merge(*responses, key=lambda x: x['datetime'], reverse=True)
 
@@ -125,7 +132,7 @@ def wait_timeline():
     responses = loop.run_until_complete(future)
     print("Timeline")
     for resp in responses:
-        print("{} {}".format(resp['datetime'], resp['tweet']))
+        print("{} {} {}".format(resp['datetime'], resp['handle'], resp['tweet']))
 
 def wait(coroutine):
     loop.run_until_complete(coroutine)

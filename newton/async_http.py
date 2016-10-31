@@ -25,4 +25,4 @@ async def fetch(url, session=None):
 async def fetch_multijson(url, session=None):
     fetched = await fetch(url, session)
     data = fetched.decode("utf8").splitlines()
-    return (json.loads(i) for i in data)
+    return [json.loads(i) for i in data]

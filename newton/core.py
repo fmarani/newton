@@ -32,49 +32,117 @@ logger.addHandler(ch)
 def random_id():
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(32))
 
+
 def hash_dict(data):
     data_hashing = json.dumps(data)
     data_hash = hashlib.sha256(data_hashing.encode("utf8")).hexdigest()
     data['hash'] = data_hash
 
+
+async def post_reply(replyToUrl, text):
+    thing = {
+            "type": "reply",
+            "msg": text,
+            "replyToUrl": replyToUrl,
+            }
+    return await post_addressable_entity(thing)
+
+
+async def post_renewt(renewtUrl):
+    thing = {
+            "type": "renewt",
+            "renewtUrl": renewtUrl,
+            }
+    return await post_unaddressable_entity(thing)
+
+
+async def post_like(likeUrl):
+    thing = {
+            "type": "like",
+            "likeUrl": likeUrl,
+            }
+    return await post_unaddressable_entity(thing)
+
+
 async def post_newt(text):
+    newt = {
+            "type": "newt",
+            "msg": text,
+            }
+    return await post_addressable_entity(newt)
+
+
+async def post_addressable_entity(data):
     try:
         original_data = await storage.read_resource("feed.json")
     except StorageException:
         original_data = ""
 
+    base = {
+            "version": 1,
+            "id": random_id(),
+            "datetime": datetime.utcnow().isoformat()
+            }
+    data.update(base)
+
+    with storage.write_new_resource("feed-%s.json" % data['id']) as f:
+        hash_dict(data)
+        data_str = json.dumps(data)
+        fentry = "%s\n" % data_str
+        f.write(fentry.encode("utf8"))
+        url = f.url
+
     with storage.write_resource("feed.json") as f:
-        newt = {
-                "version": 1,
-                "id": random_id(),
-                "type": "tweet",
-                "tweet": text,
-                "datetime": datetime.utcnow().isoformat()
-                }
-        hash_dict(newt)
-        newt_str = json.dumps(newt)
-        data = "%s\n" % newt_str
-        f.write(data.encode("utf8"))
+        data['url'] = url
+        hash_dict(data)
+        data_str = json.dumps(data)
+        fentry = "%s\n" % data_str
+        f.write(fentry.encode("utf8"))
         f.write(original_data.encode("utf8"))
+
+
+async def post_unaddressable_entity(data):
+    try:
+        original_data = await storage.read_resource("feed.json")
+    except StorageException:
+        original_data = ""
+
+    base = {
+            "version": 1,
+            "id": random_id(),
+            "datetime": datetime.utcnow().isoformat()
+            }
+    data.update(base)
+
+    with storage.write_resource("feed.json") as f:
+        hash_dict(data)
+        data_str = json.dumps(data)
+        fentry = "%s\n" % data_str
+        f.write(fentry.encode("utf8"))
+        f.write(original_data.encode("utf8"))
+
 
 def init():
     newconf = storage.init()
+    print("Handle:")
+    handle = input()
+    print("Name:")
+    name = input()
     data = {
         "version": 1,
-        "pubKey": "abc",
-        "handle": "@flagZ",
-        "name": "Federico M",
+        "type": "profile",
+        "pubKey": "tofix",
+        "handle": handle,
+        "name": name,
         "imageUrl": None,
         }
+    data['feedUrl'] = storage.get_resource_link("feed.json", config=newconf)
+    data['followingUrl'] = storage.get_resource_link("following.json", config=newconf)
 
     if config.STORAGE_CLASS == "googledrive":
         google_fileid = newconf["profile.json"]["id"]
-        data['feedUrl'] = newconf["feed.json"]["url"]
-        data['followingUrl'] = newconf["following.json"]["url"]
     else:
         google_fileid = None
-        data['feedUrl'] = config.STORAGE_LOCAL_HTTPBASE + "feed.json"
-        data['followingUrl'] = config.STORAGE_LOCAL_HTTPBASE + "following.json"
 
     hash_dict(data)
     for_saving = json.dumps(data)
@@ -132,7 +200,16 @@ def wait_timeline():
     responses = loop.run_until_complete(future)
     print("Timeline")
     for resp in responses:
-        print("{} {} {}".format(resp['datetime'], resp['handle'], resp['tweet']))
+        if resp['type'] == "newt":
+            print("{} {} {}".format(resp['datetime'], resp['handle'], resp['msg']))
+        elif resp['type'] == "renewt":
+            print("{} {} Renewt: {}".format(resp['datetime'], resp['handle'], resp['renewtUrl']))
+        elif resp['type'] == "like":
+            print("{} {} Like: {}".format(resp['datetime'], resp['handle'], resp['likeUrl']))
+        elif resp['type'] == "reply":
+            print("{} {} {} in reply to: {}".format(resp['datetime'], resp['handle'], resp['msg'], resp['replyToUrl']))
+        else:
+            print("skipping unrecognized msg type")
 
 def wait(coroutine):
     loop.run_until_complete(coroutine)

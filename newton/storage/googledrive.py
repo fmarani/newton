@@ -114,5 +114,28 @@ def write_resource(name, **kwargs):
     else:
         idfile = config.GOOGLEDRIVE_JSONFILES[name]['id']
 
-    logger.info("Writing resource from Google drive - name %s, idfile %s", name, idfile)
+    logger.info("Writing resource to Google drive - name %s, idfile %s", name, idfile)
     upload_file(t.name, name, idfile)
+
+@contextmanager
+def write_new_resource(name, **kwargs):
+    t = tempfile.NamedTemporaryFile(delete=False)
+
+    # create an empty file with url remotely
+    t.write(b"{}")
+    t.flush()
+    idfile, url = upload_file(t.name, name)
+    t.url = url
+    t.seek(0)
+
+    yield t
+    t.close()
+
+    logger.info("Writing new resource to Google drive - name %s", name)
+    upload_file(t.name, name, idfile)
+
+def get_resource_link(name, **kwargs):
+    if 'config' in kwargs:
+        config = kwargs['config'] 
+
+    return config[name]['url']

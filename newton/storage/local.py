@@ -21,10 +21,12 @@ async def read_resource(name):
 @contextmanager
 def write_resource(name, **kwargs):
     t = tempfile.NamedTemporaryFile(delete=False)
+    t.url = get_resource_link(name)  # only for parity with googledrive:write_new_resource
     yield t
     t.close()
     os.rename(t.name, os.path.join(path, name))
 
+write_new_resource = write_resource
 
 @contextmanager
 def append_resource(name):
@@ -35,4 +37,10 @@ def append_resource(name):
     except FileNotFoundError as e:
         raise StorageException(e)
 
+def get_resource_link(name, **kwargs):
+    if 'config' in kwargs:
+        conf = kwargs['config']
+    else:
+        conf = config
 
+    return conf.STORAGE_LOCAL_HTTPBASE + name

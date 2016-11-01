@@ -16,6 +16,9 @@ async def read_resource(name):
 def write_resource(name, **kwargs):
     return storage.write_resource(name, **kwargs)
 
+def write_new_resource(name, **kwargs):
+    return storage.write_new_resource(name, **kwargs)
+
 def append_resource(name):
     return storage.append_resource(name)
 
@@ -26,4 +29,7 @@ async def backup_resources():
         with open("backup/%s" % resource, 'w') as f:
             data = await read_resource(resource)
             f.write(data)
+
+def get_resource_link(name, **kwargs):
+    return storage.get_resource_link(name, **kwargs)
 

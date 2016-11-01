@@ -28,15 +28,21 @@ feed.json
 --
 id = random 32 byte
 
-{version:1, id: X, type: tweet, tweet: "abc", datetime: "xyz", location: (lng, lat), hash: afijew}
-{version:1, id: X, type: retweet, tweetid: "username:id", datetime: "xyz", location: (lng, lat), hash: afijew}
-{version:1, id: X, type: like, tweetid: "username:id", datetime: "xyz", location: (lng, lat), hash: afijew}
-{version:1, id: X, type: reply, tweet: "blabla", replyto: "username:id or username", datetime: "xyz", location: (lng, lat), hash: afijew}
+{version:1, id: X, type: newt, msg: "abc", datetime: "xyz", url: "feed/ID.json", hash: afijew}
+{version:1, id: X, type: reply, msg: "blabla", datetime: "xyz", url: "feed/ID.json", replyToUrl: "feed/ID.json or profile.json", hash: afijew}
+{version:1, id: X, type: renewt, renewtUrl: "feed/ID.json", datetime: "xyz", hash: afijew}
+{version:1, id: X, type: like, likeUrl: "feed/ID.json", datetime: "xyz", hash: afijew}
 {version:1, id: X, type: pointer, url: "next-feed.json", hash: afijew}
+
+feed/ID.json
+---
+{same as feed.json but only one}
+{version:1, id: X, type: newt, msg: "abc", datetime: "xyz", hash: afijew}
+{version:1, id: X, type: reply, msg: "blabla", datetime: "xyz", replyToUrl: "feed/ID.json or profile.json", hash: afijew}
 
 profile.json
 ---
-{version:1, pubKey: "abc123", handle: "@abc", "Name": "abc def", "imageUrl": http..., "homepage": http:... hash: "abcoiwej", pushUrl:"http..."}
+{version:1, type: "profile", pubKey: "abc123", handle: "@abc", "Name": "abc def", "imageUrl": http..., "homepage": http:... hash: "abcoiwej", pushUrl:"http..."}
 
 following.json
 ---

@@ -151,7 +151,7 @@ def init():
         f.write(for_saving.encode("utf8"))
 
 async def follow(user_url):
-    with storage.append_resource("following.json") as f:
+    async with storage.append_resource("following.json") as f:
         async with async_http.session() as session:
             async with session.get(user_url) as response:
                 resp = await response.read()
@@ -164,7 +164,8 @@ async def follow(user_url):
                         "feedUrl": data['feedUrl'],
                         }
                 hash_dict(data)
-                f.write(json.dumps(data) + "\n")
+                f.write(json.dumps(data).encode("utf8"))
+                f.write(b"\n")
 
 async def get_timelines():
     async def add_handle(fetcher, handle):
@@ -178,7 +179,7 @@ async def get_timelines():
 
     try:
         followers_data = await storage.read_resource("following.json")
-        followers = followers_data.splitlines()
+        followers = followers_data.strip().splitlines()
     except StorageException:
         followers = []
 

@@ -28,14 +28,18 @@ def write_resource(name, **kwargs):
 
 write_new_resource = write_resource
 
-@contextmanager
-def append_resource(name):
-    try:
-        f = open(os.path.join(path, name), 'a')
-        yield f
-        f.close()
-    except FileNotFoundError as e:
-        raise StorageException(e)
+class append_resource:
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
+
+    async def __aenter__(self):
+        self.f = open(os.path.join(path, self.name), 'a')
+        return self.f
+
+    async def __aexit__(self, exc_type, exc, tb):
+        self.f.close()
+
 
 def get_resource_link(name, **kwargs):
     if 'config' in kwargs:

@@ -103,6 +103,52 @@ async def read_resource(name):
         return ""
     return data.decode("utf8")
 
+
+class append_resource:
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
+
+    async def __aenter__(self):
+        t = tempfile.NamedTemporaryFile(delete=False)
+        original_data = await read_resource(self.name)
+        t.write(original_data.encode("utf8"))
+
+        self.t = t
+
+        return t
+
+    async def __aexit__(self, exc_type, exc, tb):
+        self.t.close()
+
+        if 'google_fileid' in self.kwargs:
+            idfile = self.kwargs['google_fileid']
+        else:
+            idfile = config.GOOGLEDRIVE_JSONFILES[self.name]['id']
+
+        logger.info("Appending resource to Google drive - name %s, idfile %s", self.name, idfile)
+        upload_file(self.t.name, self.name, idfile)
+
+"""
+@contextmanager
+def append_resource(name, **kwargs):
+    t = tempfile.NamedTemporaryFile(delete=False)
+    original_data = await read_resource(name)
+    t.write(original_data)
+
+    yield t
+
+    t.close()
+
+    if 'google_fileid' in kwargs:
+        idfile = kwargs['google_fileid']
+    else:
+        idfile = config.GOOGLEDRIVE_JSONFILES[name]['id']
+
+    logger.info("Appending resource to Google drive - name %s, idfile %s", name, idfile)
+    upload_file(t.name, name, idfile)
+"""
+
 @contextmanager
 def write_resource(name, **kwargs):
     t = tempfile.NamedTemporaryFile(delete=False)
@@ -124,7 +170,7 @@ def write_new_resource(name, **kwargs):
     # create an empty file with url remotely
     t.write(b"{}")
     t.flush()
-    idfile, url = upload_file(t.name, name)
+    idfile, url = upload_file(t.name, name, None)
     t.url = url
     t.seek(0)
 

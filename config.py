@@ -10,4 +10,5 @@ STORAGE_LOCAL_HTTPBASE = "http://localhost:8001/"
 
 GOOGLEDRIVE_CLIENTSECRET = location("client_secret.json")
 GOOGLEDRIVE_JSONFILES = {
-        'profile.json': {'url': 'https://docs.google.com/uc?id=0B-69O3zc5rZWbWlqeVhFSERfYkU&export=download', 'id': '0B-69O3zc5rZWbWlqeVhFSERfYkU'}, 'feed.json': {'url': 'https://docs.google.com/uc?id=0B-69O3zc5rZWQjM5UmNRLURrUDA&export=download', 'id': '0B-69O3zc5rZWQjM5UmNRLURrUDA'}, 'following.json': {'url': 'https://docs.google.com/uc?id=0B-69O3zc5rZWaEs5d0t1bElESDg&export=download', 'id': '0B-69O3zc5rZWaEs5d0t1bElESDg'}}
+        'following.json': {'id': '0B-69O3zc5rZWZG5ITnV3RnpWalU', 'url': 'https://docs.google.com/uc?id=0B-69O3zc5rZWZG5ITnV3RnpWalU&export=download'}, 'profile.json': {'id': '0B-69O3zc5rZWLUdUQ3hnMXpKYzg', 'url': 'https://docs.google.com/uc?id=0B-69O3zc5rZWLUdUQ3hnMXpKYzg&export=download'}, 'feed.json': {'id': '0B-69O3zc5rZWS0N3M2ZCLVNhNTQ', 'url': 'https://docs.google.com/uc?id=0B-69O3zc5rZWS0N3M2ZCLVNhNTQ&export=download'}}
+

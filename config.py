@@ -4,7 +4,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 location = lambda x: os.path.join(BASE_DIR, x)
 
 STORAGE_CLASS = "local"
-#STORAGE_CLASS = "googledrive"
+STORAGE_CLASS = "googledrive"
 STORAGE_LOCAL_PATH = location("output")
 STORAGE_LOCAL_HTTPBASE = "http://localhost:8001/"
 

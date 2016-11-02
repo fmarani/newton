@@ -89,7 +89,7 @@ async def post_addressable_entity(data):
         hash_dict(data)
         data_str = json.dumps(data)
         fentry = "%s\n" % data_str
-        f.write(fentry.encode("utf8"))
+        f.write(fentry)
         url = f.url
 
     with storage.write_resource("feed.json") as f:
@@ -97,8 +97,8 @@ async def post_addressable_entity(data):
         hash_dict(data)
         data_str = json.dumps(data)
         fentry = "%s\n" % data_str
-        f.write(fentry.encode("utf8"))
-        f.write(original_data.encode("utf8"))
+        f.write(fentry)
+        f.write(original_data)
 
 
 async def post_unaddressable_entity(data):
@@ -118,8 +118,8 @@ async def post_unaddressable_entity(data):
         hash_dict(data)
         data_str = json.dumps(data)
         fentry = "%s\n" % data_str
-        f.write(fentry.encode("utf8"))
-        f.write(original_data.encode("utf8"))
+        f.write(fentry)
+        f.write(original_data)
 
 
 def init():
@@ -148,7 +148,7 @@ def init():
     for_saving = json.dumps(data)
 
     with storage.write_resource("profile.json", google_fileid=google_fileid) as f:
-        f.write(for_saving.encode("utf8"))
+        f.write(for_saving)
 
 async def follow(user_url):
     async with storage.append_resource("following.json") as f:
@@ -164,8 +164,8 @@ async def follow(user_url):
                         "feedUrl": data['feedUrl'],
                         }
                 hash_dict(data)
-                f.write(json.dumps(data).encode("utf8"))
-                f.write(b"\n")
+                f.write(json.dumps(data))
+                f.write("\n")
 
 async def get_timelines():
     async def add_handle(fetcher, handle):
@@ -196,6 +196,7 @@ async def get_timelines():
 
     return heapq.merge(*responses, key=lambda x: x['datetime'], reverse=True)
 
+
 def wait_timeline():
     future = asyncio.ensure_future(get_timelines())
     responses = loop.run_until_complete(future)
@@ -211,6 +212,7 @@ def wait_timeline():
             print("{} {} {} in reply to: {}".format(resp['datetime'], resp['handle'], resp['msg'], resp['replyToUrl']))
         else:
             print("skipping unrecognized msg type")
+
 
 def wait(coroutine):
     loop.run_until_complete(coroutine)

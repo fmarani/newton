@@ -20,6 +20,7 @@ APPLICATION_NAME = 'Newton'
 
 logger = logging.getLogger()
 
+
 def get_credentials():
     """Gets valid user credentials from storage.
 
@@ -44,6 +45,7 @@ def get_credentials():
             credentials = tools.run_flow(flow, store, flags)
         print('Storing credentials to ' + credential_path)
     return credentials
+
 
 def upload_file(file_path, file_name, file_id):
     credentials = get_credentials()
@@ -75,10 +77,11 @@ def upload_file(file_path, file_name, file_id):
     download_url = file.get('webContentLink')
     return file['id'], download_url
 
+
 def init():
-    with tempfile.NamedTemporaryFile() as f:
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf8") as f:
         # google drive does not accept empty files
-        f.write(b"{}")
+        f.write("{}")
         f.flush()
 
         profile = upload_file(f.name, "profile.json", None)
@@ -95,6 +98,7 @@ def init():
     print("Please write this data in the config file")
     return conf
 
+
 async def read_resource(name):
     url = config.GOOGLEDRIVE_JSONFILES[name]['url']
     logger.info("Reading resource from Google drive - name %s, url %s", name, url)
@@ -110,9 +114,9 @@ class append_resource:
         self.kwargs = kwargs
 
     async def __aenter__(self):
-        t = tempfile.NamedTemporaryFile(delete=False)
+        t = tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf8")
         original_data = await read_resource(self.name)
-        t.write(original_data.encode("utf8"))
+        t.write(original_data)
 
         self.t = t
 
@@ -129,29 +133,10 @@ class append_resource:
         logger.info("Appending resource to Google drive - name %s, idfile %s", self.name, idfile)
         upload_file(self.t.name, self.name, idfile)
 
-"""
-@contextmanager
-def append_resource(name, **kwargs):
-    t = tempfile.NamedTemporaryFile(delete=False)
-    original_data = await read_resource(name)
-    t.write(original_data)
-
-    yield t
-
-    t.close()
-
-    if 'google_fileid' in kwargs:
-        idfile = kwargs['google_fileid']
-    else:
-        idfile = config.GOOGLEDRIVE_JSONFILES[name]['id']
-
-    logger.info("Appending resource to Google drive - name %s, idfile %s", name, idfile)
-    upload_file(t.name, name, idfile)
-"""
 
 @contextmanager
 def write_resource(name, **kwargs):
-    t = tempfile.NamedTemporaryFile(delete=False)
+    t = tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf8")
     yield t
     t.close()
 
@@ -163,12 +148,13 @@ def write_resource(name, **kwargs):
     logger.info("Writing resource to Google drive - name %s, idfile %s", name, idfile)
     upload_file(t.name, name, idfile)
 
+
 @contextmanager
 def write_new_resource(name, **kwargs):
-    t = tempfile.NamedTemporaryFile(delete=False)
+    t = tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf8")
 
     # create an empty file with url remotely
-    t.write(b"{}")
+    t.write("{}")
     t.flush()
     idfile, url = upload_file(t.name, name, None)
     t.url = url
@@ -180,8 +166,9 @@ def write_new_resource(name, **kwargs):
     logger.info("Writing new resource to Google drive - name %s", name)
     upload_file(t.name, name, idfile)
 
+
 def get_resource_link(name, **kwargs):
     if 'config' in kwargs:
-        config = kwargs['config'] 
+        config = kwargs['config']
 
     return config[name]['url']

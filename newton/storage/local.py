@@ -7,9 +7,11 @@ import os
 
 path = getattr(config, "STORAGE_LOCAL_PATH")
 
+
 def init():
     if not os.path.exists(path):
         os.mkdir(path)
+
 
 async def read_resource(name):
     try:
@@ -18,15 +20,18 @@ async def read_resource(name):
     except FileNotFoundError as e:
         raise StorageException(e)
 
+
 @contextmanager
 def write_resource(name, **kwargs):
-    t = tempfile.NamedTemporaryFile(delete=False)
+    t = tempfile.NamedTemporaryFile(mode="w", encoding="utf8", delete=False)
     t.url = get_resource_link(name)  # only for parity with googledrive:write_new_resource
     yield t
     t.close()
     os.rename(t.name, os.path.join(path, name))
 
+
 write_new_resource = write_resource
+
 
 class append_resource:
     def __init__(self, name, **kwargs):

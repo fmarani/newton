@@ -18,3 +18,11 @@ More than a classic client application, this software is more similar to a stati
 There are two "storage" modules now, one for local publishing (needs a web server setup) and one using Google drive (because most people have a Google account). I think having a Dropbox and an S3 module in the future would be nice.
 
 More on this later.
+
+
+Quickstart
+---
+
+Create a virtualenv with all the libraries in requirements.txt installed.
+
+After that, see `python -m newton -h`

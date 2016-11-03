@@ -5,15 +5,15 @@ from contextlib import contextmanager
 import tempfile
 import os
 
-path = getattr(config, "STORAGE_LOCAL_PATH")
-
 
 def init():
+    path = getattr(config, "STORAGE_LOCAL_PATH")
     if not os.path.exists(path):
         os.mkdir(path)
 
 
 async def read_resource(name):
+    path = getattr(config, "STORAGE_LOCAL_PATH")
     try:
         with open(os.path.join(path, name), 'r') as f:
             return f.read()
@@ -23,6 +23,7 @@ async def read_resource(name):
 
 @contextmanager
 def write_resource(name, **kwargs):
+    path = getattr(config, "STORAGE_LOCAL_PATH")
     t = tempfile.NamedTemporaryFile(mode="w", encoding="utf8", delete=False)
     t.url = get_resource_link(name)  # only for parity with googledrive:write_new_resource
     yield t
@@ -39,6 +40,7 @@ class append_resource:
         self.kwargs = kwargs
 
     async def __aenter__(self):
+        path = getattr(config, "STORAGE_LOCAL_PATH")
         self.f = open(os.path.join(path, self.name), 'a')
         return self.f
 

@@ -20,8 +20,6 @@ from . import storage
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
-loop = asyncio.get_event_loop()
-
 ch = logging.StreamHandler(sys.stdout)
 ch.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -122,12 +120,14 @@ async def post_unaddressable_entity(data):
         f.write(original_data)
 
 
-def init():
+def init(handle=None, name=None):
     newconf = storage.init()
-    print("Handle:")
-    handle = input()
-    print("Name:")
-    name = input()
+    if not handle:
+        print("Handle:")
+        handle = input()
+    if not name:
+        print("Name:")
+        name = input()
     data = {
         "version": 1,
         "type": "profile",
@@ -136,8 +136,12 @@ def init():
         "name": name,
         "imageUrl": None,
         }
-    data['feedUrl'] = storage.get_resource_link("feed.json", config=newconf)
-    data['followingUrl'] = storage.get_resource_link("following.json", config=newconf)
+    if newconf:
+        data['feedUrl'] = storage.get_resource_link("feed.json", config=newconf)
+        data['followingUrl'] = storage.get_resource_link("following.json", config=newconf)
+    else:
+        data['feedUrl'] = storage.get_resource_link("feed.json")
+        data['followingUrl'] = storage.get_resource_link("following.json")
 
     if config.STORAGE_CLASS == "googledrive":
         google_fileid = newconf["profile.json"]["id"]
@@ -150,24 +154,26 @@ def init():
     with storage.write_resource("profile.json", google_fileid=google_fileid) as f:
         f.write(for_saving)
 
+
 async def follow(user_url):
     async with storage.append_resource("following.json") as f:
         async with async_http.session() as session:
-            async with session.get(user_url) as response:
-                resp = await response.read()
-                data = json.loads(resp.decode("utf8"))
-                # FIXME: check collision
-                data = {
-                        "version": 1,
-                        "handle": data['handle'],
-                        "profileUrl": user_url,
-                        "feedUrl": data['feedUrl'],
-                        }
-                hash_dict(data)
-                f.write(json.dumps(data))
-                f.write("\n")
+            response = await session.get(user_url)
+            resp = await response.read()
+            data = json.loads(resp.decode("utf8"))
+            # FIXME: check collision
+            data = {
+                    "version": 1,
+                    "handle": data['handle'],
+                    "profileUrl": user_url,
+                    "feedUrl": data['feedUrl'],
+                    }
+            hash_dict(data)
+            f.write(json.dumps(data))
+            f.write("\n")
 
-async def get_timelines():
+
+async def get_unified_timeline(*, loop=None):
     async def add_handle(fetcher, handle):
         data = await fetcher
         for datum in data:
@@ -189,16 +195,17 @@ async def get_timelines():
             handle = user_data['handle']
             url_feed = user_data['feedUrl']
 
-            task = asyncio.ensure_future(add_handle(async_http.fetch_multijson(url_feed, session), handle))
+            task = asyncio.ensure_future(add_handle(async_http.fetch_multijson(url_feed, session=session), handle), loop=loop)
             tasks.append(task)
 
-        responses = await asyncio.gather(*tasks)
+        responses = await asyncio.gather(*tasks, loop=loop)
 
     return heapq.merge(*responses, key=lambda x: x['datetime'], reverse=True)
 
 
 def wait_timeline():
-    future = asyncio.ensure_future(get_timelines())
+    future = asyncio.ensure_future(get_unified_timeline())
+    loop = asyncio.get_event_loop()
     responses = loop.run_until_complete(future)
     print("Timeline")
     for resp in responses:
@@ -215,4 +222,5 @@ def wait_timeline():
 
 
 def wait(coroutine):
+    loop = asyncio.get_event_loop()
     loop.run_until_complete(coroutine)

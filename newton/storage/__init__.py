@@ -2,25 +2,33 @@ from newton import config
 from newton.storage import local, googledrive
 import os
 
-storage = {
+
+def storage():
+    return {
         'local': local,
         'googledrive': googledrive
         }[config.STORAGE_CLASS]
 
+
 def init():
-    return storage.init()
+    return storage().init()
+
 
 async def read_resource(name):
-    return await storage.read_resource(name)
+    return await storage().read_resource(name)
+
 
 def write_resource(name, **kwargs):
-    return storage.write_resource(name, **kwargs)
+    return storage().write_resource(name, **kwargs)
+
 
 def write_new_resource(name, **kwargs):
-    return storage.write_new_resource(name, **kwargs)
+    return storage().write_new_resource(name, **kwargs)
+
 
 def append_resource(name):
-    return storage.append_resource(name)
+    return storage().append_resource(name)
+
 
 async def backup_resources():
     if not os.path.exists("backup"):
@@ -30,6 +38,7 @@ async def backup_resources():
             data = await read_resource(resource)
             f.write(data)
 
+
 def get_resource_link(name, **kwargs):
-    return storage.get_resource_link(name, **kwargs)
+    return storage().get_resource_link(name, **kwargs)
 

@@ -42,8 +42,9 @@ feed/ID.json
 
 profile.json
 ---
-{version:1, type: "profile", pubKey: "abc123", handle: "@abc", "Name": "abc def", "imageUrl": http..., "homepage": http:... hash: "abcoiwej", pushUrl:"http..."}
+{version:1, type: "profile", pubKey: "abc123", handle: "@abc", "Name": "abc def", "imageUrl": http..., "homepage": http:... hash: "abcoiwej", feedUrl: "oij", 
+"followingUrl": oifjwe, "feedPushUrl": "jfowjefo" }
 
 following.json
 ---
-{version: 1, handle: "@akak - can be different than remote handle", baseUrl: "http://../jsonetc", hash: "iojoij"} 
+{version: 1, handle: "@akak - can be different than remote handle", profileUrl: "http://../jsonetc", feedUrl: "jj", feedPushUrl: "oij", hash: "iojoij"} 

@@ -4,7 +4,10 @@ chardet==2.3.0
 google-api-python-client==1.5.4
 httplib2==0.9.2
 multidict==2.1.2
+-e git+git@github.com:fmarani/newton.git@e531298f4ca2cf7951b6a405e9680e7f432ca44e#egg=Newton
 oauth2client==4.0.0
+oauthlib==2.0.0
+-e git+git@github.com:odrling/peony-twitter.git@58f9705cef9fdf9a08aa3acb75a0323011765cff#egg=peony-twitter
 pkg-resources==0.0.0
 py==1.4.31
 pyasn1==0.1.9

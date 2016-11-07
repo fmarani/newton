@@ -14,6 +14,7 @@ import newton
 from newton import config
 from newton import async_http
 from newton.storage.errors import StorageException
+from newton import twitter as tw
 
 from . import storage
 
@@ -38,11 +39,19 @@ def hash_dict(data):
 
 
 async def post_reply(replyToUrl, text):
+    first_word, _ = text.split(" ", 1)
+    if first_word[0] != "@":
+        return False
+
     thing = {
             "type": "reply",
             "msg": text,
             "replyToUrl": replyToUrl,
             }
+
+    if config.TWITTER_INTEGRATION:
+        await tw.post_reply(replyToUrl, text)
+
     return await post_addressable_entity(thing)
 
 
@@ -51,6 +60,10 @@ async def post_renewt(renewtUrl):
             "type": "renewt",
             "renewtUrl": renewtUrl,
             }
+
+    if config.TWITTER_INTEGRATION:
+        await tw.post_retweet(renewtUrl)
+
     return await post_unaddressable_entity(thing)
 
 
@@ -59,16 +72,23 @@ async def post_like(likeUrl):
             "type": "like",
             "likeUrl": likeUrl,
             }
+
+    if config.TWITTER_INTEGRATION:
+        await tw.post_like(likeUrl)
+
     return await post_unaddressable_entity(thing)
 
 
-async def post_newt(text):
+async def post_newt(text, loop):
     newt = {
             "type": "newt",
             "msg": text,
             }
-    return await post_addressable_entity(newt)
 
+    if config.TWITTER_INTEGRATION:
+        await tw.post_tweet(text)
+
+    return await post_addressable_entity(newt)
 
 async def post_addressable_entity(data):
     try:
@@ -98,6 +118,8 @@ async def post_addressable_entity(data):
         f.write(fentry)
         f.write(original_data)
 
+    return True
+
 
 async def post_unaddressable_entity(data):
     try:
@@ -119,11 +141,13 @@ async def post_unaddressable_entity(data):
         f.write(fentry)
         f.write(original_data)
 
+    return True
+
 
 def init(handle=None, name=None):
     newconf = storage.init()
     if not handle:
-        print("Handle:")
+        print("Handle (without @):")
         handle = input()
     if not name:
         print("Name:")
@@ -157,27 +181,26 @@ def init(handle=None, name=None):
 
 async def follow(user_url):
     async with storage.append_resource("following.json") as f:
-        async with async_http.session() as session:
-            response = await session.get(user_url)
-            resp = await response.read()
-            data = json.loads(resp.decode("utf8"))
-            # FIXME: check collision
-            data = {
-                    "version": 1,
-                    "handle": data['handle'],
-                    "profileUrl": user_url,
-                    "feedUrl": data['feedUrl'],
-                    }
-            hash_dict(data)
-            f.write(json.dumps(data))
-            f.write("\n")
+        response = await async_http.fetch(user_url)
+        data = json.loads(response.decode("utf8"))
+        # FIXME: check collision
+        data = {
+                "version": 1,
+                "handle": data['handle'],
+                "profileUrl": user_url,
+                "feedUrl": data['feedUrl'],
+                }
+        hash_dict(data)
+        f.write(json.dumps(data))
+        f.write("\n")
 
 
 async def get_unified_timeline(*, loop=None):
-    async def add_handle(fetcher, handle):
+    async def hydrate(fetcher, handle):
         data = await fetcher
         for datum in data:
             datum['handle'] = handle
+            datum['datetime'] = datetime.strptime(datum['datetime'], "%Y-%m-%dT%H:%M:%S.%f")
         return data
 
     tasks = []
@@ -189,38 +212,38 @@ async def get_unified_timeline(*, loop=None):
     except StorageException:
         followers = []
 
-    async with async_http.session() as session:
-        for line in followers:
-            user_data = json.loads(line)
-            handle = user_data['handle']
-            url_feed = user_data['feedUrl']
+    for line in followers:
+        user_data = json.loads(line)
+        handle = user_data['handle']
+        url_feed = user_data['feedUrl']
 
-            task = asyncio.ensure_future(add_handle(async_http.fetch_multijson(url_feed, session=session), handle), loop=loop)
-            tasks.append(task)
+        task = asyncio.ensure_future(hydrate(async_http.fetch_multijson(url_feed), handle), loop=loop)
+        tasks.append(task)
 
-        responses = await asyncio.gather(*tasks, loop=loop)
+    if config.TWITTER_INTEGRATION:
+        task = asyncio.ensure_future(tw.timeline(), loop=loop)
+        tasks.append(task)
 
+    responses = await asyncio.gather(*tasks, loop=loop)
     return heapq.merge(*responses, key=lambda x: x['datetime'], reverse=True)
 
 
-def wait_timeline():
+def wait_timeline(loop):
     future = asyncio.ensure_future(get_unified_timeline())
-    loop = asyncio.get_event_loop()
     responses = loop.run_until_complete(future)
     print("Timeline")
     for resp in responses:
         if resp['type'] == "newt":
-            print("{} {} {}".format(resp['datetime'], resp['handle'], resp['msg']))
+            print("{:%Y-%m-%d %H:%M} {} {}".format(resp['datetime'], resp['handle'], resp['msg']))
         elif resp['type'] == "renewt":
-            print("{} {} Renewt: {}".format(resp['datetime'], resp['handle'], resp['renewtUrl']))
+            print("{:%Y-%m-%d %H:%M} {} Renewt: {}".format(resp['datetime'], resp['handle'], resp['renewtUrl']))
         elif resp['type'] == "like":
-            print("{} {} Like: {}".format(resp['datetime'], resp['handle'], resp['likeUrl']))
+            print("{:%Y-%m-%d %H:%M} {} Like: {}".format(resp['datetime'], resp['handle'], resp['likeUrl']))
         elif resp['type'] == "reply":
-            print("{} {} {} in reply to: {}".format(resp['datetime'], resp['handle'], resp['msg'], resp['replyToUrl']))
+            print("{:%Y-%m-%d %H:%M} {} {} in reply to: {}".format(resp['datetime'], resp['handle'], resp['msg'], resp['replyToUrl']))
         else:
             print("skipping unrecognized msg type")
 
 
-def wait(coroutine):
-    loop = asyncio.get_event_loop()
+def wait(coroutine, loop):
     loop.run_until_complete(coroutine)

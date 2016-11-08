@@ -144,21 +144,18 @@ async def post_unaddressable_entity(data):
     return True
 
 
-def init(handle=None, name=None):
+def init_profile():
     newconf = storage.init()
-    if not handle:
-        print("Handle (without @):")
-        handle = input()
-    if not name:
-        print("Name:")
-        name = input()
+    handle = config.USER_HANDLE
+    name = config.USER_NAME
     data = {
         "version": 1,
         "type": "profile",
         "pubKey": "tofix",
         "handle": handle,
         "name": name,
-        "imageUrl": None,
+        "imageUrl": config.USER_IMAGE_URL,
+        "pushUrl": config.USER_PUSH_URL,
         }
     if newconf:
         data['feedUrl'] = storage.get_resource_link("feed.json", config=newconf)
@@ -186,6 +183,7 @@ async def follow(user_url):
         # FIXME: check collision
         data = {
                 "version": 1,
+                "type": "follow",
                 "handle": data['handle'],
                 "profileUrl": user_url,
                 "feedUrl": data['feedUrl'],
@@ -245,5 +243,5 @@ def wait_timeline(loop):
             print("skipping unrecognized msg type")
 
 
-def wait(coroutine, loop):
-    loop.run_until_complete(coroutine)
+def wait(*coroutines, loop):
+    loop.run_until_complete(asyncio.gather(*coroutines, loop=loop))

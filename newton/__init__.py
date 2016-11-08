@@ -10,5 +10,8 @@ class ConfigLoader:
     def __getattr__(self, key):
         return getattr(self.container, key)
 
+    def override(self, key, value):
+        return setattr(self.container, key, value)
+
 
 config = ConfigLoader()

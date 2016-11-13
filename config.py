@@ -6,7 +6,10 @@ location = lambda x: os.path.join(BASE_DIR, x)
 USER_HANDLE = "flagZ"
 USER_NAME = "Federico M"
 USER_IMAGE_URL = "http://domain/test.png"
-USER_PUSH_URL = "http://localhost:5001/pub"
+USER_PUSH_URLS = {
+        'PUBLISH': "http://localhost:8001/pub",
+        'SUBSCRIBE': "http://localhost:8001/sub"
+        }
 
 STORAGE_CLASS = "local"
 #STORAGE_CLASS = "googledrive"

@@ -1,4 +1,5 @@
 import importlib
+from contextlib import contextmanager
 
 class ConfigLoader:
     def __init__(self):
@@ -12,6 +13,13 @@ class ConfigLoader:
 
     def override(self, key, value):
         return setattr(self.container, key, value)
+
+    @contextmanager
+    def patch(self, key, value):
+        oldval = getattr(self.container, key)
+        setattr(self.container, key, value)
+        yield
+        setattr(self.container, key, oldval)
 
 
 config = ConfigLoader()

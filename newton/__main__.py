@@ -47,6 +47,7 @@ elif args.like:
     wait(post_like(args.like[0]), loop=loop)
 else:
     wait_timeline(loop)
+    wait_stream_timeline(loop)
 
 async_http.destroy()
 

@@ -46,8 +46,11 @@ async def fetch_json_newer_than(url, last_modified, timeout=0):
 
 async def fetch_multijson(url):
     fetched = await fetch(url)
-    data = fetched.decode("utf8").splitlines()
-    return [json.loads(i) for i in data]
+    if fetched:
+        data = fetched.decode("utf8").splitlines()
+        return [json.loads(i) for i in data]
+    else:
+        return []
 
 
 async def publish(url, data):

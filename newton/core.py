@@ -267,6 +267,7 @@ async def poll_timeline(subscribe_url, url_feed, handle, new_entities_q, timeout
         if (datetime.now() - last_entity).seconds > timeout:
             break
         else:
+            await asyncio.sleep(1, loop=loop)
             logger.info("Continuing to wait for changes...")
 
 
@@ -333,7 +334,7 @@ def print_entity(entity):
 
 
 def wait_stream_timeline(loop):
-    stream_unified_timeline(print_entity, loop)
+    return loop.run_until_complete(stream_unified_timeline(print_entity, loop))
 
 
 def wait_timeline(loop):
